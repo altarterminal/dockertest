@@ -1,0 +1,9 @@
+services:
+
+  ubuntu-main:
+    build: ./ubuntu/main
+    image: img-ubuntu-main
+    container_name: container-ubuntu-main
+    restart: always
+    ports:
+      - 50000:22

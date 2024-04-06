@@ -23,4 +23,12 @@ RUN sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/g' /etc/ssh
 RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/'  /etc/ssh/sshd_config
 RUN sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/'      /etc/ssh/sshd_config
 
+RUN mkdir /home/${user}/.ssh
+COPY id_rsa     /home/${user}/.ssh/id_rsa
+COPY id_rsa.pub /home/${user}/.ssh/authorized_keys
+RUN chmod 600 /home/${user}/.ssh/id_rsa
+RUN chmod 600 /home/${user}/.ssh/authorized_keys
+RUN chown ${user}:${user} /home/${user}/.ssh/id_rsa
+RUN chown ${user}:${user} /home/${user}/.ssh/authorized_keys
+
 CMD ["/usr/sbin/sshd", "-D"]
