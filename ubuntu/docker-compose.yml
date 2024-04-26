@@ -1,7 +1,7 @@
 services:
 
   ubuntu-main:
-    build: ./ubuntu/main
+    build: ./main
     image: img-ubuntu-main
     container_name: container-ubuntu-main
     restart: always
