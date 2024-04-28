@@ -1,0 +1,9 @@
+services:
+
+  jenkins_agent:
+    build: ./main
+    image: img-jenkins-agent
+    container_name: container-jenkins-agent
+    restart: always
+    ports:
+      - 50001:22
