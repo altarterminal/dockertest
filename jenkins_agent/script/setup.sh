@@ -7,7 +7,21 @@ set -eu
 
 rdir=$(dirname $(cd $(dirname $0); pwd))
 tdir=${rdir}/template
-ddir=${rdir}/main
+ddir=${rdir}/dockerfile
+
+#####################################################
+# prepare
+#####################################################
+
+mkdir -p "${ddir}"
+
+#####################################################
+# fit in Docker Compose
+#####################################################
+
+cat "${tdir}/docker-compose.yml"                    |
+sed 's!<<ddir>>!'"$(basename ${ddir})"'!'           |
+cat > "${rdir}/docker-compose.yml"
 
 #####################################################
 # fit in Dockerfile

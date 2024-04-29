@@ -1,7 +1,7 @@
 services:
 
   jenkins_agent:
-    build: ./main
+    build: <<ddir>>
     image: img-jenkins-agent
     container_name: container-jenkins-agent
     restart: always
