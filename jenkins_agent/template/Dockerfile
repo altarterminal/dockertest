@@ -25,7 +25,7 @@ RUN sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/'      /etc/ssh
 
 RUN mkdir /home/${user}/.ssh
 RUN chown ${user}:${user} /home/${user}/.ssh
-COPY template/id_rsa.pub /home/${user}/.ssh/authorized_keys
+COPY id_rsa.pub /home/${user}/.ssh/authorized_keys
 RUN chown ${user}:${user} /home/${user}/.ssh/authorized_keys
 RUN chmod 0600 /home/${user}/.ssh/authorized_keys
 
