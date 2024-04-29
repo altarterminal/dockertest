@@ -1,8 +1,8 @@
 FROM ubuntu:22.04
 
 ARG user=jenkins
-ARG uid=501
-ARG gid=20
+ARG uid=<<uid>>
+ARG gid=<<gid>>
 
 RUN apt update && apt upgrade -y
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata
