@@ -2,6 +2,13 @@
 set -eu
 
 ######################################################################
+# user setting
+######################################################################
+
+cid='auto-credential-id'
+desc='description'
+
+######################################################################
 # setting
 ######################################################################
 
@@ -11,10 +18,10 @@ print_usage_and_exit () {
 	Options : -c<credintial-ID> -d<description>
 
 	add a jenkins agent
-	cmd example: create-credentials-by-xml system::system::jenkins (global)
 
-	-c: specify the credential ID (default: auto-credential-id)
-	-d: specify the description (default: this credential has been auto generated)
+	current setting:
+	credential id: "$cid"
+	description: "$desc"
 	USAGE
   exit 1
 }
@@ -24,16 +31,12 @@ print_usage_and_exit () {
 ######################################################################
 
 opr=''
-opt_c='auto-credential-id'
-opt_d='this credential has been auto generated'
 
 i=1
 for arg in ${1+"$@"}
 do
   case "$arg" in
     -h|--help|--version) print_usage_and_exit ;;
-    -c*)                 opt_c=${arg#-c}      ;;
-    -d*)                 opt_d=${arg#-d}      ;;
     *)
       if [ $i -eq $# ] && [ -z "$opr" ]; then
         opr=$arg
@@ -46,14 +49,6 @@ do
 
   i=$((i + 1))
 done
-
-if [ -z "$opt_c" ]; then
-  echo "${0##*/}: credential ID must be specified" 1>&2
-  exit 21
-fi
-
-cid=${opt_c}
-desc=${opt_d}
 
 ######################################################################
 # main routine

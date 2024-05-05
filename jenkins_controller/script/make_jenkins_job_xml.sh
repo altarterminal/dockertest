@@ -2,21 +2,29 @@
 set -eu
 
 ######################################################################
+# user setting
+######################################################################
+
+rurl='https://github.com/altarterminal/jenkinstest'
+bname='main'
+desc='this job has been auto generated'
+
+######################################################################
 # setting
 ######################################################################
 
 print_usage_and_exit () {
   cat <<-USAGE 1>&2
-	Usage   : ${0##*/} -r<repository> 
-	Options : -b<branch-name> -c<credential-ID> -d<description>
+	Usage   : ${0##*/}
+	Options :
 
 	add a jenkins job
 	cmd example: create-job auto-job
 
-	-r: specify the repository url
-	-b: specify the branch name (default: main)
-	-c: specify the credential ID (default: auto-credential-id)
-	-d: specify the description (default: this job has been auto generated)
+	curret setting:
+	repository url: "$rurl"
+	branch name: "$bname"
+	description: "$desc"
 	USAGE
   exit 1
 }
@@ -26,21 +34,13 @@ print_usage_and_exit () {
 ######################################################################
 
 opr=''
-opt_r=''
-opt_b='main'
-opt_c='auto-credential-id'
-opt_d='this job has been auto generated'
 
 i=1
 for arg in ${1+"$@"}
 do
   case "$arg" in
     -h|--help|--version) print_usage_and_exit ;;
-    -r*)                 opt_r=${arg#-r}      ;;
-    -b*)                 opt_b=${arg#-b}      ;;
-    -c*)                 opt_c=${arg#-c}      ;;
-    -d*)                 opt_d=${arg#-d}      ;;
-    *)
+   *)
       if [ $i -eq $# ] && [ -z "$opr" ]; then
         opr=$arg
       else
@@ -52,26 +52,6 @@ do
 
   i=$((i + 1))
 done
-
-if [ -z "$opt_r" ]; then
-  echo "${0##*/}: repository must be specified" 1>&2
-  exit 21
-fi
-
-if [ -z "$opt_b" ]; then
-  echo "${0##*/}: branch name must be specified" 1>&2
-  exit 31
-fi
-
-if [ -z "$opt_c" ]; then
-  echo "${0##*/}: credential ID must be specified" 1>&2
-  exit 31
-fi
-
-rname=${opt_r}
-bname=${opt_b}
-cid=${opt_c}
-desc=${opt_d}
 
 ######################################################################
 # main routine
@@ -96,8 +76,7 @@ cat <<'EOF'                                                          |
       <configVersion>2</configVersion>
       <userRemoteConfigs>
         <hudson.plugins.git.UserRemoteConfig>
-          <url><<rname>></url>
-          <credentialsId><<cid>></credentialsId>
+          <url><<rurl>></url>
         </hudson.plugins.git.UserRemoteConfig>
       </userRemoteConfigs>
       <branches>
@@ -117,9 +96,8 @@ cat <<'EOF'                                                          |
 </flow-definition>
 EOF
 
-sed 's!<<rname>>!'"${rname}"'!'                                           |
+sed 's!<<rurl>>!'"${rurl}"'!'                                             |
 sed 's!<<bname>>!'"${bname}"'!'                                           |
-sed 's!<<cid>>!'"${cid}"'!'                                               |
 sed 's!<<desc>>!'"${desc}"'!'                                             |
 
 cat
