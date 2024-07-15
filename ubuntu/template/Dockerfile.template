@@ -3,10 +3,13 @@ FROM ubuntu:22.04
 ARG user=<<uname>>
 ARG uid=<<uid>>
 
-# settings for package
+# settings for packages
 RUN apt update && apt upgrade -y
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata
 RUN apt install -y sudo locales bash-completion openssh-server vim
+
+# settings for additional packages
+RUN apt install -y <<packages>>
 
 # settings for timezone
 RUN ln -sf /usr/share/zoneinfo/Asia/Tokyo /etc/localtime
