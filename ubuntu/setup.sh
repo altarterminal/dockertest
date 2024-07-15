@@ -8,7 +8,7 @@ set -eu
 print_usage_and_exit () {
   cat <<-USAGE 1>&2
 Usage   : ${0##*/}
-Options : -u<user name> -i<uid> -n<num> -p<pakages>
+Options : -u<user name> -i<uid> -n<num> -p<pakages> -xa<proxy>
 
 prepare files for generic Ubuntu docker container
 
@@ -16,6 +16,7 @@ prepare files for generic Ubuntu docker container
 -i: specify the uid (default: host's uid)
 -n: specify the number of container (default: 1)
 -p: specify the packages which are to be installed (comma seperated list)
+-x: specify the proxy setting ("address":"port")
 USAGE
   exit 1
 }
@@ -29,6 +30,7 @@ opt_u=$(id -un)
 opt_i=$(id -u)
 opt_n='1'
 opt_p=''
+opt_x=''
 
 i=1
 for arg in ${1+"$@"}
@@ -39,6 +41,7 @@ do
     -i*)                 opt_i=${arg#-i}      ;;
     -n*)                 opt_n=${arg#-n}      ;;
     -p*)                 opt_p=${arg#-p}      ;;
+    -x*)                 opt_x=${arg#-x}      ;;
     *)
       if [ $i -eq $# ] && [ -z "$opr" ]; then
         opr=$arg
@@ -71,6 +74,7 @@ readonly USER_NAME=${opt_u}
 readonly USER_ID=${opt_i}
 readonly CONTAINER_NUM=${opt_n}
 readonly PACKAGES=${opt_p}
+readonly PROXY=${opt_x}
 
 readonly THIS_DIR=$(dirname $0)
 readonly DOCKER_DIR="${THIS_DIR}/dockerfile"
@@ -95,7 +99,12 @@ sed 's!<<uid>>!'"${USER_ID}"'!'                                     |
 if [ -n "${PACKAGES}" ]; then
   sed 's!<<packages>>!'"$(echo ${PACKAGES} | tr "," " ")"'!'
 else
-  sed 's!^RUN apt install -y <<packages>>$!# no packages specified!'
+  sed 's!^.*<<packages>>.*$!# no packages specified!'
+fi                                                                  |
+if [ -n "${PROXY}" ]; then
+  sed 's!<<proxy>>!'"${PROXY}"'!g'
+else
+  sed 's!^.*<<proxy>>.*$!# no proxy specified!'
 fi                                                                  |
 cat > "${DOCKER_FILE}"
 
