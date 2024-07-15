@@ -77,11 +77,12 @@ readonly PACKAGES=${opt_p}
 readonly PROXY=${opt_x}
 
 readonly THIS_DIR=$(dirname $0)
-readonly DOCKER_DIR="${THIS_DIR}/dockerfile"
-readonly TEMPLATE_DIR="${THIS_DIR}/template"
+readonly TOP_DIR="${THIS_DIR}/.."
+readonly DOCKER_DIR="${TOP_DIR}/dockerfile"
+readonly TEMPLATE_DIR="${TOP_DIR}/template"
 readonly DOCKER_TEMPLATE="${TEMPLATE_DIR}/Dockerfile.template"
 readonly DOCKER_FILE="${DOCKER_DIR}/Dockerfile"
-readonly DOCKER_COMPOSE="${THIS_DIR}/docker-compose.yml"
+readonly DOCKER_COMPOSE="${TOP_DIR}/docker-compose.yml"
 
 #####################################################################
 # main routine

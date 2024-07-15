@@ -10,7 +10,7 @@ print_usage_and_exit () {
 Usage   : ${0##*/}
 Options :
 
-start a generic Ubuntu docker container
+tear down a generic Ubuntu docker container
 USAGE
   exit 1
 }
@@ -40,9 +40,10 @@ do
 done
 
 readonly THIS_DIR=$(dirname $0)
-readonly DOCKER_DIR="${THIS_DIR}/dockerfile"
+readonly TOP_DIR="${THIS_DIR}/.."
+readonly DOCKER_DIR="${TOP_DIR}/dockerfile"
 readonly DOCKER_FILE="${DOCKER_DIR}/Dockerfile"
-readonly DOCKER_COMPOSE="${THIS_DIR}/docker-compose.yml"
+readonly DOCKER_COMPOSE="${TOP_DIR}/docker-compose.yml"
 
 if [ ! -f "${DOCKER_FILE}" ] || [ ! -r "${DOCKER_FILE}" ]; then
   echo "${0##*/}: dockerfile not exist" 1>&2
@@ -60,6 +61,6 @@ fi
 
 # start the container
 (
-  cd "${THIS_DIR}"
-  docker compose up -d
+  cd "${TOP_DIR}"
+  docker compose down
 )
