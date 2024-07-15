@@ -8,14 +8,14 @@ set -eu
 print_usage_and_exit () {
   cat <<-USAGE 1>&2
 Usage   : ${0##*/}
-Options : -u<user name> -i<uid> -n<num> -d
+Options : -u<user name> -i<uid> -n<num> -p<pakages>
 
-make a generic Ubuntu docker container
+prepare files for generic Ubuntu docker container
 
 -u: specify the user name (default: host's user name)
 -i: specify the uid (default: host's uid)
 -n: specify the number of container (default: 1)
--d: only prepare the files and not run container
+-p: specify the packages which are to be installed (comma seperated list)
 USAGE
   exit 1
 }
@@ -28,17 +28,17 @@ opr=''
 opt_u=$(id -un)
 opt_i=$(id -u)
 opt_n='1'
-opt_d='no'
+opt_p=''
 
 i=1
 for arg in ${1+"$@"}
 do
   case "$arg" in
     -h|--help|--version) print_usage_and_exit ;;
-    -u*)                 opt_u=${arg#-u}      ;; 
-    -i*)                 opt_i=${arg#-i}      ;; 
-    -n*)                 opt_n=${arg#-n}      ;; 
-    -d)                  opt_d='yes'          ;; 
+    -u*)                 opt_u=${arg#-u}      ;;
+    -i*)                 opt_i=${arg#-i}      ;;
+    -n*)                 opt_n=${arg#-n}      ;;
+    -p*)                 opt_p=${arg#-p}      ;;
     *)
       if [ $i -eq $# ] && [ -z "$opr" ]; then
         opr=$arg
@@ -70,7 +70,7 @@ fi
 readonly USER_NAME=${opt_u}
 readonly USER_ID=${opt_i}
 readonly CONTAINER_NUM=${opt_n}
-readonly IS_DRYRUN=${opt_d}
+readonly PACKAGES=${opt_p}
 
 readonly THIS_DIR=$(dirname $0)
 readonly DOCKER_DIR="${THIS_DIR}/dockerfile"
@@ -92,6 +92,11 @@ cp "${HOME}/.ssh/id_rsa.pub" "${DOCKER_DIR}"
 cat "${DOCKER_TEMPLATE}"                                            |
 sed 's!<<uname>>!'"${USER_NAME}"'!'                                 |
 sed 's!<<uid>>!'"${USER_ID}"'!'                                     |
+if [ -n "${PACKAGES}" ]; then
+  sed 's!<<packages>>!'"$(echo ${PACKAGES} | tr "," " ")"'!'
+else
+  sed 's!^RUN apt install -y <<packages>>$!# no packages specified!'
+fi                                                                  |
 cat > "${DOCKER_FILE}"
 
 # make a valid docker-compose
@@ -124,11 +129,3 @@ BEGIN {
 '                                                                   |
 { echo "services:"; cat; }                                          |
 cat > "${DOCKER_COMPOSE}"
-
-# start the container
-if [ "${IS_DRYRUN}" = 'no' ]; then
-  (
-    cd "${THIS_DIR}"
-    docker compose up -d
-  )
-fi
