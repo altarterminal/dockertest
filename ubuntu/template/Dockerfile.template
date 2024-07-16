@@ -4,8 +4,8 @@ ARG user=<<uname>>
 ARG uid=<<uid>>
 
 # settigs for proxy
-RUN echo 'Acquire::http::Proxy  "http://<<proxy>>;"' >> '/etc/apt/apt.conf'
-RUN echo 'Acquire::https::Proxy "http://<<proxy>>;"' >> '/etc/apt/apt.conf'
+RUN echo 'Acquire::http::Proxy  "http://<<proxy>>";' >> '/etc/apt/apt.conf'
+RUN echo 'Acquire::https::Proxy "http://<<proxy>>";' >> '/etc/apt/apt.conf'
 
 # settings for packages
 RUN apt update && apt upgrade -y
