@@ -8,7 +8,7 @@ set -eu
 print_usage_and_exit () {
   cat <<-USAGE 1>&2
 Usage   : ${0##*/}
-Options : -u<user name> -i<uid> -n<num> -p<pakages> -xa<proxy>
+Options : -u<user name> -i<uid> -n<num> -p<pakages> -x<proxy>
 
 prepare files for generic Ubuntu docker container
 
