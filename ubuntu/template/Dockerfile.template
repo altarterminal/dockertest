@@ -3,7 +3,7 @@ FROM ubuntu:22.04
 ARG user=<<uname>>
 ARG uid=<<uid>>
 
-# settigs for proxy
+# settings for proxy
 RUN echo 'Acquire::http::Proxy  "http://<<proxy>>";' >> '/etc/apt/apt.conf'
 RUN echo 'Acquire::https::Proxy "http://<<proxy>>";' >> '/etc/apt/apt.conf'
 
