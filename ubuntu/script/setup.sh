@@ -8,15 +8,16 @@ set -eu
 print_usage_and_exit () {
   cat <<-USAGE 1>&2
 Usage   : ${0##*/}
-Options : -u<user name> -i<uid> -n<num> -p<pakages> -x<proxy>
+Options : -u<user name> -i<uid> -n<num> -p<pakages> -x<proxy> -f
 
 prepare files for generic Ubuntu docker container
 
 -u: specify the user name (default: host's user name)
 -i: specify the uid (default: host's uid)
 -n: specify the number of container (default: 1)
--p: specify the packages which are to be installed (comma seperated list)
+-p: specify the packages which are to be installed (comma-seperated list)
 -x: specify the proxy setting ("address":"port")
+-f: specify whether force to re-build the image (default: no)
 USAGE
   exit 1
 }
@@ -31,6 +32,7 @@ opt_i=$(id -u)
 opt_n='1'
 opt_p=''
 opt_x=''
+opt_f='no'
 
 i=1
 for arg in ${1+"$@"}
@@ -42,6 +44,7 @@ do
     -n*)                 opt_n=${arg#-n}      ;;
     -p*)                 opt_p=${arg#-p}      ;;
     -x*)                 opt_x=${arg#-x}      ;;
+    -f)                  opt_f='yes'          ;;
     *)
       if [ $i -eq $# ] && [ -z "$opr" ]; then
         opr=$arg
@@ -75,6 +78,9 @@ readonly USER_ID=${opt_i}
 readonly CONTAINER_NUM=${opt_n}
 readonly PACKAGES=${opt_p}
 readonly PROXY=${opt_x}
+readonly IS_REBUILD=${opt_f}
+
+readonly IMAGE_NAME='gen-ubuntu'
 
 readonly THIS_DIR=$(dirname $0)
 readonly TOP_DIR="${THIS_DIR}/.."
@@ -87,6 +93,19 @@ readonly DOCKER_COMPOSE="${TOP_DIR}/docker-compose.yml"
 #####################################################################
 # main routine
 #####################################################################
+
+if [ "${IS_REBUILD}" = 'yes' ]; then
+  OLD_IMG_ID=$(docker images                                        |
+               sed '1d'                                             |
+               awk '$1~/^'"${IMAGE_NAME}"'$/ { print $3; }'         )
+
+  if [ -n "${OLD_IMG_ID}" ]; then
+    if ! docker rmi "${OLD_IMG_ID}" >/dev/null 2>&1; then
+      echo "${0##*/}: cannot delete the old image <${OLD_IMG_ID}>" 1>&2
+      exit 1
+    fi
+  fi
+fi
 
 # prepare environment
 mkdir -p "${DOCKER_DIR}"
@@ -115,16 +134,17 @@ head -n "${CONTAINER_NUM}"                                          |
 while read -r dummy
 do
 cat <<EOF
-  gen-ubuntu-no-<<number>>:
+  <<image_name>>-no-<<number>>:
     build: ./dockerfile
-    image: gen-ubuntu
-    container_name: gen-ubuntu-no-<<number>>
+    image: <<image_name>>
+    container_name: <<image_name>>-no-<<number>>
     restart: always
     ports:
       - <<port_number>>:22
 
 EOF
 done                                                                |
+sed 's!<<image_name>>!'"${IMAGE_NAME}"'!g'                          |
 awk -v RS='\n\n' '
 BEGIN { 
   port_ini = 50000;
