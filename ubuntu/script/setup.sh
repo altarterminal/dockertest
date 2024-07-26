@@ -129,11 +129,10 @@ fi                                                                  |
 cat > "${DOCKER_FILE}"
 
 # make a valid docker-compose
-yes                                                                 |
-head -n "${CONTAINER_NUM}"                                          |
-while read -r dummy
+i=1
+while [ $i -le "${CONTAINER_NUM}" ];
 do
-cat <<EOF
+  cat <<'  EOF'
   <<image_name>>-no-<<number>>:
     build: ./dockerfile
     image: <<image_name>>
@@ -142,7 +141,9 @@ cat <<EOF
     ports:
       - <<port_number>>:22
 
-EOF
+  EOF
+
+  i=$((i + 1))
 done                                                                |
 sed 's!<<image_name>>!'"${IMAGE_NAME}"'!g'                          |
 awk -v RS='\n\n' '
