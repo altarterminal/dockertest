@@ -95,13 +95,13 @@ readonly DOCKER_COMPOSE="${TOP_DIR}/docker-compose.yml"
 #####################################################################
 
 if [ "${IS_REBUILD}" = 'yes' ]; then
-  OLD_IMG_ID=$(docker images                                        |
-               sed '1d'                                             |
-               awk '$1~/^'"${IMAGE_NAME}"'$/ { print $3; }'         )
+  OLD_ID=$(docker images                                            |
+           sed '1d'                                                 |
+           awk '$1~/^'"${IMAGE_NAME}"'$/ { print $3; }'             )
 
-  if [ -n "${OLD_IMG_ID}" ]; then
-    if ! docker rmi "${OLD_IMG_ID}" >/dev/null 2>&1; then
-      echo "${0##*/}: cannot delete the old image <${OLD_IMG_ID}>" 1>&2
+  if [ -n "${OLD_ID}" ]; then
+    if ! docker rmi "${OLD_ID}" >/dev/null 2>&1; then
+      echo "${0##*/}: cannot delete the old image <${OLD_ID}>" 1>&2
       exit 1
     fi
   fi
@@ -148,12 +148,12 @@ done                                                                |
 sed 's!<<image_name>>!'"${IMAGE_NAME}"'!g'                          |
 awk -v RS='\n\n' '
 BEGIN { 
-  port_ini = 50000;
-  number   = 1;
+  port_base = 50000;
+  number    = 1;
 }
 { 
-  gsub(/<<number>>/,      number,            $0); 
-  gsub(/<<port_number>>/, port_ini + number, $0);
+  gsub(/<<number>>/,      number,             $0);
+  gsub(/<<port_number>>/, port_base + number, $0);
   print; print "";
   number++;
 }
