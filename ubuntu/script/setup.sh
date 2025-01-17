@@ -8,16 +8,17 @@ set -eu
 print_usage_and_exit () {
   cat <<-USAGE 1>&2
 Usage   : ${0##*/}
-Options : -u<user name> -i<uid> -n<num> -p<pakages> -x<proxy> -f
+Options : -u<user name> -i<user id> -n<num> -k<key path> -p<pakages> -x<proxy> -f
 
-prepare files for generic Ubuntu docker container
+Prepare files for generic Ubuntu docker container.
 
--u: specify the user name (default: host's user name)
--i: specify the uid (default: host's uid)
--n: specify the number of container (default: 1)
--p: specify the packages which are to be installed (comma-seperated list)
--x: specify the proxy setting ("address":"port")
--f: specify whether force to re-build the image (default: no)
+-u: Specify the user name (default: host's user name)
+-i: Specify the uid (default: host's uid)
+-n: Specify the number of container (default: 1)
+-k: Specify the key path for public key login (default: ${HOME}/.ssh/id_rsa)
+-p: Specify the packages which are to be installed (comma-seperated list)
+-x: Specify the proxy setting ("address":"port")
+-f: Specify whether force to re-build the image (default: no)
 USAGE
   exit 1
 }
@@ -30,6 +31,7 @@ opr=''
 opt_u=$(id -un)
 opt_i=$(id -u)
 opt_n='1'
+opt_k="${HOME}/.ssh/id_rsa"
 opt_p=''
 opt_x=''
 opt_f='no'
@@ -42,6 +44,7 @@ do
     -u*)                 opt_u=${arg#-u}      ;;
     -i*)                 opt_i=${arg#-i}      ;;
     -n*)                 opt_n=${arg#-n}      ;;
+    -k*)                 opt_k=${arg#-k}      ;;
     -p*)                 opt_p=${arg#-p}      ;;
     -x*)                 opt_x=${arg#-x}      ;;
     -f)                  opt_f='yes'          ;;
@@ -64,18 +67,28 @@ if [ -z "${opt_u}" ]; then
 fi
 
 if ! echo "${opt_i}" | grep -Eq '^[0-9]+$'; then
-  echo "${0##*/}: invalid uid <${opt_i}> specified" 1>&2
+  echo "${0##*/}: invalid uid specified <${opt_i}>" 1>&2
   exit 1
 fi
 
 if ! echo "${opt_n}" | grep -Eq '^[0-9]+$'; then
-  echo "${0##*/}: invalid number <${opt_n}> specified" 1>&2
+  echo "${0##*/}: invalid number specified <${opt_n}>" 1>&2
+  exit 1
+fi
+
+if [ ! -f "${opt_k%.pub}" ] || [ ! -r "${opt_k%.pub}" ]; then
+  echo "${0##*/}: invalid key specified <${opt_k%.pub}>" 1>&2
+  exit 1
+fi
+if [ ! -f "${opt_k%.pub}.pub" ] || [ ! -r "${opt_k%.pub}.pub" ]; then
+  echo "${0##*/}: invalid key specified <${opt_k%.pub}.pub>" 1>&2
   exit 1
 fi
 
 readonly USER_NAME=${opt_u}
 readonly USER_ID=${opt_i}
 readonly CONTAINER_NUM=${opt_n}
+readonly KEY_PATH=${opt_k%.pub}
 readonly PACKAGES=${opt_p}
 readonly PROXY=${opt_x}
 readonly IS_REBUILD=${opt_f}
@@ -109,13 +122,14 @@ fi
 
 # prepare environment
 mkdir -p "${DOCKER_DIR}"
-cp "${HOME}/.ssh/id_rsa"     "${DOCKER_DIR}"
-cp "${HOME}/.ssh/id_rsa.pub" "${DOCKER_DIR}"
+cp "${KEY_PATH}"     "${DOCKER_DIR}"
+cp "${KEY_PATH}.pub" "${DOCKER_DIR}"
 
 # make a valid dockerfile
 cat "${DOCKER_TEMPLATE}"                                            |
 sed 's!<<uname>>!'"${USER_NAME}"'!'                                 |
 sed 's!<<uid>>!'"${USER_ID}"'!'                                     |
+sed 's!<<keybase>>!'"${KEY_PATH##*/}"'!'                            |
 if [ -n "${PACKAGES}" ]; then
   sed 's!<<packages>>!'"$(echo ${PACKAGES} | tr "," " ")"'!'
 else

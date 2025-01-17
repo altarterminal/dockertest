@@ -2,6 +2,7 @@ FROM ubuntu:22.04
 
 ARG user=<<uname>>
 ARG uid=<<uid>>
+ARG keybase=<<keybase>>
 
 # settings for proxy
 RUN echo 'Acquire::http::Proxy  "http://<<proxy>>";' >> '/etc/apt/apt.conf'
@@ -33,11 +34,11 @@ RUN sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/'      /etc/ssh
 
 # settings for ssh
 RUN mkdir /home/${user}/.ssh
-COPY id_rsa     /home/${user}/.ssh/id_rsa
-COPY id_rsa.pub /home/${user}/.ssh/authorized_keys
-RUN chmod 600 /home/${user}/.ssh/id_rsa
+COPY ${keybase}     /home/${user}/.ssh/${keybase}
+COPY ${keybase}.pub /home/${user}/.ssh/authorized_keys
+RUN chmod 600 /home/${user}/.ssh/${keybase}
 RUN chmod 600 /home/${user}/.ssh/authorized_keys
-RUN chown ${user}:${user} /home/${user}/.ssh/id_rsa
+RUN chown ${user}:${user} /home/${user}/.ssh/${keybase}
 RUN chown ${user}:${user} /home/${user}/.ssh/authorized_keys
 
 CMD ["/usr/sbin/sshd", "-D"]
