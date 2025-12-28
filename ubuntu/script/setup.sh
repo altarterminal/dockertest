@@ -8,7 +8,7 @@ set -eu
 print_usage_and_exit () {
   cat <<-USAGE 1>&2
 Usage   : ${0##*/}
-Options : -u<user name> -i<user id> -n<num> -k<key path> -p<pakages> -x<proxy> -f
+Options : -u<user name> -i<user id> -n<num> -k<key path> -p<pakages> -b<base port> -x<proxy> -f
 
 Prepare files for generic Ubuntu docker container.
 
@@ -17,6 +17,7 @@ Prepare files for generic Ubuntu docker container.
 -n: Specify the number of container (default: 1)
 -k: Specify the key path for public key login (default: ${HOME}/.ssh/id_rsa)
 -p: Specify the packages which are to be installed (comma-seperated list)
+-b: Specify the base ssh port number to start at (default: 50000)
 -x: Specify the proxy setting ("address":"port")
 -f: Specify whether force to re-build the image (default: no)
 USAGE
@@ -33,6 +34,7 @@ opt_i=$(id -u)
 opt_n='1'
 opt_k="${HOME}/.ssh/id_rsa"
 opt_p=''
+opt_b='50000'
 opt_x=''
 opt_f='no'
 
@@ -46,6 +48,7 @@ do
     -n*)                 opt_n=${arg#-n}      ;;
     -k*)                 opt_k=${arg#-k}      ;;
     -p*)                 opt_p=${arg#-p}      ;;
+    -b*)                 opt_b=${arg#-b}      ;;
     -x*)                 opt_x=${arg#-x}      ;;
     -f)                  opt_f='yes'          ;;
     *)
@@ -85,12 +88,18 @@ if [ ! -f "${opt_k%.pub}.pub" ] || [ ! -r "${opt_k%.pub}.pub" ]; then
   exit 1
 fi
 
+if ! echo "${opt_b}" | grep -Eq '^[0-9]+$'; then
+  echo "${0##*/}: invalid port specified <${opt_b}>" 1>&2
+  exit 1
+fi
+
 readonly USER_NAME=${opt_u}
 readonly USER_ID=${opt_i}
 readonly CONTAINER_NUM=${opt_n}
 readonly KEY_PATH=${opt_k%.pub}
 readonly PACKAGES=${opt_p}
 readonly PROXY=${opt_x}
+readonly BASE_PORT=${opt_b}
 readonly IS_REBUILD=${opt_f}
 
 readonly IMAGE_NAME='gen-ubuntu'
@@ -160,14 +169,13 @@ do
   i=$((i + 1))
 done                                                                |
 sed 's!<<image_name>>!'"${IMAGE_NAME}"'!g'                          |
-awk -v RS='\n\n' '
+awk -v RS='\n\n' -v base_port=${BASE_PORT} '
 BEGIN { 
-  port_base = 50000;
   number    = 1;
 }
 { 
   gsub(/<<number>>/,      number,             $0);
-  gsub(/<<port_number>>/, port_base + number, $0);
+  gsub(/<<port_number>>/, base_port + number, $0);
   print; print "";
   number++;
 }
